@@ -6,7 +6,7 @@ import librosa
 import numpy as np
 import  sys
 
-
+#below is the gcc function from cross_correlation
 def gcc_phat(sig, refsig, fs=1, max_tau=None, interp=16):
     '''
     This function computes the offset between the signal sig and the reference signal refsig
@@ -36,7 +36,7 @@ def gcc_phat(sig, refsig, fs=1, max_tau=None, interp=16):
     tau = shift / float(interp * fs)
 
     return tau, cc
-
+#below function is to convert video to wav and then change the frequency 
 def main():
 
     files = os.listdir("./")
