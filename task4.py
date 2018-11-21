@@ -5,8 +5,10 @@ import os
 import librosa
 import numpy as np
 import  sys
+import moviepy.editor as mp
+import cv2
 
-#below is the gcc function from cross_correlation
+
 def gcc_phat(sig, refsig, fs=1, max_tau=None, interp=16):
     '''
     This function computes the offset between the signal sig and the reference signal refsig
@@ -36,22 +38,36 @@ def gcc_phat(sig, refsig, fs=1, max_tau=None, interp=16):
     tau = shift / float(interp * fs)
 
     return tau, cc
-#below function is to convert video to wav and then change the frequency 
+
 def main():
 
     files = os.listdir("./")
     for f in files:
        if f.lower()[-3:] == "mp4":
             # print "processing", f
-
             inFile = f
+            cap = cv2.VideoCapture(inFile)
+            fourcc = cv2.VideoWriter_fourcc('M', 'P', '4', '2')
+            _, image = cap.read()
+            outVideo = cv2.VideoWriter(f[:-3] + "avi", fourcc, 30, (image.shape[1],image.shape[0]))
+            count =1
+            while (1):
+              ret, image = cap.read()
+              flag = 1
+              if  flag:
+                  image_h, image_w, _ = image.shape
+                  print("checked for shape".format(image.shape))
+                  cv2.putText(image, "Frame: {0}" .format(count), (10, 230), 6, 2, (255, 0, 255), 3)
+                  outVideo.write(image)
+                  cv2.imshow('image',image)
+                  count+=1
             outFile = f[:-3] + "wav"
-            cmd = "ffmpeg -i {} -vn  -ac 2 -ar 44100 -ab 320k -f mp3 {}".format(inFile, outFile)
-            os.popen(cmd)
-            y, sr = librosa.load(inFile, sr=None)
+            clip2 = mp.VideoFileClip(f)
+            clip = mp.VideoFileClip(f).subclip(0,clip2.duration)
+            clip.audio.write_audiofile(f[:-3] + "wav")
+            y, sr = librosa.load(inFile, sr=None, mono=False)
             y_8k = librosa.resample(y,sr,2000)
             librosa.output.write_wav(outFile, y_8k, 2000)
-
 
 
     filesTotal = []
@@ -76,12 +92,11 @@ def main():
             rate1, data1 = Wav2Value(video_path + output_name_1).get_wav_para()
             rate2, data2 = Wav2Value(video_path + k).get_wav_para()
             offset, _ = gcc_phat(data1[0:10*rate1, 0], data2[0:10*rate2, 0]);
-            offset = (offset/44100)*30;
+            offset = (offset/44100)*30
             filesTotal.append(offset)
 
     #print(data1[0:5760000, 0])
     #Wav2Value(video_path + output_name_1).plot_wav(0)
     for x in filesTotal:
         print(x)
-
 main()
